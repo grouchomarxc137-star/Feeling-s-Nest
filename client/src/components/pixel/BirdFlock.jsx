@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import PixelBird from './PixelBird.jsx';
 
 // Ambient background birds. dir 1 = left-to-right, -1 = right-to-left.
@@ -10,7 +11,43 @@ const BIRDS = [
   { top: '88%', dur: 40, delay: -25, px: 2, dir: -1, body: '#d38f83', wing: '#b96f63' },
 ];
 
+const PHRASES = ['Ti amo Principessa Mia', 'Nhebek', 'EUUW', 'Mimimimimi', 'My person', 'My soulmate', 'My other half'];
+
+const CHIRP_DURATION = 3400;
+
+function randomDelay() {
+  return 5000 + Math.random() * 9000;
+}
+
 export default function BirdFlock() {
+  const [bubbles, setBubbles] = useState({});
+
+  useEffect(() => {
+    const timers = [];
+
+    function scheduleChirp(i) {
+      timers.push(
+        setTimeout(() => {
+          const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+          setBubbles((prev) => ({ ...prev, [i]: phrase }));
+          timers.push(
+            setTimeout(() => {
+              setBubbles((prev) => {
+                const next = { ...prev };
+                delete next[i];
+                return next;
+              });
+              scheduleChirp(i);
+            }, CHIRP_DURATION)
+          );
+        }, randomDelay())
+      );
+    }
+
+    BIRDS.forEach((_, i) => scheduleChirp(i));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   return (
     <div className="bird-flock" aria-hidden="true">
       {BIRDS.map((bird, i) => (
@@ -25,6 +62,7 @@ export default function BirdFlock() {
           }}
         >
           <div className="bird-bob" style={{ animationDelay: `${i * 0.7}s` }}>
+            {bubbles[i] && <span className="bird-speech">{bubbles[i]}</span>}
             <PixelBird body={bird.body} wing={bird.wing} px={bird.px} flip={bird.dir === -1} />
           </div>
         </div>
