@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import routes from './routes.js';
 import { registerSocketHandlers } from './socket.js';
+import { startDiscordBot } from './discordBot.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ if (fs.existsSync(clientDist)) {
 }
 
 registerSocketHandlers(io);
+startDiscordBot();
 
 server.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);

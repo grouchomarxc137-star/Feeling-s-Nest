@@ -2,6 +2,7 @@ import * as repo from './repo.js';
 import * as sm from './stateMachine.js';
 import { ROLES, SESSION_STATUS } from './constants.js';
 import { notifySessionComplete } from './discordNotify.js';
+import { unlockAfterSession } from './discordBot.js';
 
 // sessionId -> { initiator: Set<socketId>, responder: Set<socketId> }
 const presence = new Map();
@@ -37,11 +38,19 @@ function broadcastPresence(io, sessionId) {
 
 function notifyDiscordIfJustCompleted(sessionId) {
   const session = repo.getSession(sessionId);
-  if (!session || session.status !== SESSION_STATUS.COMPLETED || session.discord_notified) return;
+  if (!session) return;
+  if (session.status === SESSION_STATUS.CANCELLED) {
+    unlockAfterSession(sessionId);
+    return;
+  }
+  if (session.status !== SESSION_STATUS.COMPLETED || session.discord_notified) return;
   repo.markDiscordNotified(sessionId);
   const fullState = repo.getFullState(sessionId);
   notifySessionComplete(sm.decorateState(fullState)).then(
-    () => console.log(`[discord] posted summary for session ${sessionId}`),
+    () => {
+      console.log(`[discord] posted summary for session ${sessionId}`);
+      unlockAfterSession(sessionId);
+    },
     (err) => console.error(`[discord] failed to post summary for session ${sessionId}:`, err.message)
   );
 }
