@@ -83,6 +83,9 @@ export function startDiscordBot() {
     if (!lockState) return;
     if (message.guildId !== guildId) return;
     if (message.author.bot) return;
+    // Let the active session's own join link through, so either of you can
+    // reshare/paste it without it getting wiped along with everything else.
+    if (message.content.includes(`${baseUrl}/s/${lockState.sessionId}`)) return;
     try {
       await message.delete();
     } catch (err) {
